@@ -124,10 +124,9 @@ class TreeVisitor(funxVisitor):
     # Visit a parse tree produced by funxParser#var.
     def visitVar(self, ctx:funxParser.VarContext):
         var_name = ctx.var.text
-        vars = self.interpreter.currframe()
-        if var_name not in vars:
-            vars[var_name] = 0
-        return vars[var_name]
+        if var_name not in self.interpreter.currframe():
+            self.interpreter.currframe()[var_name] = 0
+        return self.interpreter.currframe()[var_name]
 
     # Visit a parse tree produced by funxParser#atom.
     def visitAtom(self, ctx:funxParser.AtomContext):
@@ -142,8 +141,7 @@ class TreeVisitor(funxVisitor):
     def visitAssignment(self, ctx:funxParser.AssignmentContext):
         dst_name = ctx.dst.text
         val = self.visit(ctx.src)
-        vars = self.interpreter.currframe()
-        vars[dst_name] = val
+        self.interpreter.currframe()[dst_name] = val
 
     # Visit a parse tree produced by funxParser#ifelse.
     def visitIfelse(self, ctx:funxParser.IfelseContext):

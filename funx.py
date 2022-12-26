@@ -10,12 +10,12 @@ submit_count = 0
 @app.route('/', methods = ['POST', 'GET'])
 def mainpage():
     global submit_count
+    out = None
+    error = None
     
     if request.method == 'POST':
         result = request.form
         code = result['input']
-        out = None
-        error = None
 
         try:
             out = funx_intr.execute(code)

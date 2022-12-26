@@ -1,39 +1,71 @@
 <html>
   <head>
     <title>Funx interpreter</title>
+    <style>
+      .column {
+        float: left;
+        width: 50%;
+      }
+
+      .row:after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+
+      #code {
+        width: 90%;
+        height: 50%;
+        font-family: "Lucidia Console", monospace;
+      }
+    </style>
   </head>
   <body>
     <h1>Funx</h1>
-    <form action="/", method="POST">
-      <p>Console: <textarea name="input"></textarea></p>
-      <input type = "submit" value = "Submit" />
-      <p>Out: {{ out }}</p>
-      <p>Error: {{ error }}</p>
+    <div class="row">
+      <div class="column">
+        <div class="row">
+          <div class="column">
+            <h2>Functions:</h2>
+            <ul>
+            {% for key, value in funcs.items() %}
+            <li>{{ key }}{% for p in value[1] %} {{ p }}{% endfor %}<br></li>
+            {% endfor %}
+            </ul>
+          </div>
 
-      <p>Functions:
-        <ul>
-        {% for key, value in funcs.items() %}
-        <il>{{ key }}</il>
-        {% endfor %}
-        </ul>
-      </p>
+          <div class="column">
+            <h2>Variables:</h2>
+            <ul>
+            {% for key, value in vars.items() %}
+            <li>{{ key }} = {{ value }}<br></il>
+            {% endfor %}
+            </li>
+          </div>
+        </div>
 
-      <p>Variables:
-        <ul>
-        {% for key, value in vars.items() %}
-        <il>{{ key }}<br></il>
-        {% endfor %}
-        </ul>
-      </p>
+        <h2>Console:</h2>
+        <form action="/", method="POST">
+          <textarea name="input" id="code"></textarea>
+          <br><br>
+          <input type="submit" value="Submit" />
+        </form>
+        <p>Out: {{ out }}</p>
+        <p>Error: {{ error }}</p>
+      </div>
 
-      <p>History:
+      <div class="column">
+        <h2>Results:</h2>
         <ul>
         {% for h in hist %}
-        <il>In {{h[2]}}:<br>{{ h[0] }}<br>Out {{h[2]}}: {{ h[1]}}<br></il>
+        <li>
+          <b>Submission {{ h[2] }}:</b><br>
+          In: {{ h[0] }}<br>
+          Out: {{ h[1]}}<br>
+        </li>
         {% endfor %}
         </ul>
-      </p>
-
-    </form>
+      </div>
+    </div>
   </body>
 </html> 

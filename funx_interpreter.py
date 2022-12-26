@@ -217,7 +217,7 @@ class TreeVisitor(funxVisitor):
         if len(param_names) != len(set(param_names)):
             raise FunxRepeatedParams(function_name, param_names, ctx.getText())
         
-        self.interpreter.funcs[function_name] = (ctx.b, param_names)
+        self.interpreter.add_function(function_name, (ctx.b, param_names))
 
 
 class FunxErrorListener(ErrorListener):
@@ -230,18 +230,29 @@ class FunxInterpreter:
         self.error_listener = FunxErrorListener()
         self.funcs = {}
         self.stackframe = []
+        self.functionframe = []
         self.visitor = TreeVisitor(self)
 
         self.pushframe()
 
     def pushframe(self):
         self.stackframe.append({})
+        self.functionframe.append([])
     
     def popframe(self):
         self.stackframe.pop()
 
+        for f in self.functionframe[-1]:
+            self.funcs.pop(f)
+        
+        self.functionframe.pop()
+
     def currframe(self):
         return self.stackframe[-1]
+
+    def add_function(self, fname, ctx):
+        self.funcs[fname] = ctx
+        self.functionframe[-1].append(fname)
 
     def execute(self, code):
         input_stream = InputStream(code)

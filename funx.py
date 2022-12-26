@@ -1,7 +1,47 @@
 from antlr4 import *
+from antlr4.error.ErrorListener import ErrorListener
 from funxLexer import funxLexer
 from funxParser import funxParser
 from funxVisitor import funxVisitor
+
+class FunxUndefinedFunction(Exception):
+    
+    def __init__(self, fname):
+        self.function_name = fname
+
+class FunxRedefinedFunction(Exception):
+
+    def __init__(self, fname):
+        self.function_name = fname
+
+class FunxInvalidOperand(Exception):
+
+    def __init__(self, expr):
+        self.expr = expr
+
+class FunxInvalidParams(Exception):
+
+    def __init__(self, fname, fparams, params):
+        self.function_name = fname
+        self.function_params = fparams
+        self.given_params = params
+
+class FunxRepeatedParams(Exception):
+
+    def __init__(self, fname, fparams):
+        self.function_name = fname
+        self.function_params = fparams
+
+class FunxZeroDivision(Exception):
+    
+    def __init__(self, expr):
+        self.line = expr
+
+class FunxSyntaxError(Exception):
+    
+    def __init__(self, line):
+        self.line = line
+
 
 class TreeVisitor(funxVisitor):
 
@@ -10,6 +50,10 @@ class TreeVisitor(funxVisitor):
         self.funcs = {}
 
         self.stackframe.append({})
+
+    # Visit a parse tree produced by funxParser#root.
+    def visitRoot(self, ctx: funxParser.RootContext):
+        return self.visit(ctx.b)
 
     # Visit a parse tree produced by funxParser#block.
     def visitBlock(self, ctx:funxParser.BlockContext):
@@ -22,14 +66,16 @@ class TreeVisitor(funxVisitor):
         function_name = ctx.fun.text
         params = []
 
+        if function_name not in self.funcs:
+            raise FunxUndefinedFunction(function_name)
+
         for p in ctx.params:
             params.append(self.visit(p))
 
         func = self.funcs[function_name]
 
         if len(params) != len(func[1]):
-            print("Error with parameter amount")
-            return None
+            raise FunxInvalidParams(function_name, func[1], params)
 
         self.stackframe.append({})
 
@@ -47,21 +93,27 @@ class TreeVisitor(funxVisitor):
         right = self.visit(ctx.right)
         res = 0
 
-        # TODO check division by 0 and Nones
+        if left is None:
+            raise FunxInvalidOperand(ctx.left.text)
+        elif right is None:
+            raise FunxInvalidOperand(ctx.right.text)
 
-        match ctx.op.text:
-            case '*': res = left * right
-            case '/': res = left // right
-            case '%': res = left % right
-            case '+': res = left + right
-            case '-': res = left - right
-            case '<': res = int(left < right)
-            case '>': res = int(left > right)
-            case '<=': res = int(left <= right)
-            case '>=': res = int(left >= right)
-            case '=': res = int(left == right)
-            case '!=': res = int(left != right)
-            case _: print("Unkwown operand")
+        try:
+            match ctx.op.text:
+                case '*': res = left * right
+                case '/': res = left // right
+                case '%': res = left % right
+                case '+': res = left + right
+                case '-': res = left - right
+                case '<': res = int(left < right)
+                case '>': res = int(left > right)
+                case '<=': res = int(left <= right)
+                case '>=': res = int(left >= right)
+                case '=': res = int(left == right)
+                case '!=': res = int(left != right)
+                case _: raise FunxSyntaxError("unknown binary operator " + ctx.op.text)
+        except ZeroDivisionError:
+            raise FunxZeroDivision(ctx.getText()) from None
         
         return res
 
@@ -97,6 +149,9 @@ class TreeVisitor(funxVisitor):
     # Visit a parse tree produced by funxParser#ifelse.
     def visitIfelse(self, ctx:funxParser.IfelseContext):
         cond = self.visit(ctx.cond)
+        if cond is None:
+            raise FunxInvalidOperand(ctx.cond.text)
+        
         if cond: return self.visit(ctx.trueb)
         elif ctx.falseb: return self.visit(ctx.falseb)
 
@@ -104,31 +159,51 @@ class TreeVisitor(funxVisitor):
     def visitWhile(self, ctx:funxParser.WhileContext):
         cond = self.visit(ctx.cond)
 
+        if cond is None:
+            raise FunxInvalidOperand(ctx.cond.text)
+
         while cond:
             res = self.visit(ctx.b)
             if res: return res
             cond = self.visit(ctx.cond)
+            if cond is None:
+                raise FunxInvalidOperand(ctx.cond.text)
 
 
     # Visit a parse tree produced by funxParser#fundef.
     def visitFundef(self, ctx:funxParser.FundefContext):
         function_name = ctx.fun.text
+
+        if function_name in self.funcs:
+            raise FunxRedefinedFunction(function_name)
+
         param_names = []
         for p in ctx.params:
             param_names.append(p.text)
+
+        if len(param_names) != len(set(param_names)):
+            raise FunxRepeatedParams(function_name, param_names)
         
         self.funcs[function_name] = (ctx.b, param_names)
 
 
+class FunxErrorListener(ErrorListener):
+    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
+        raise FunxSyntaxError("line " + str(line) + ":" + str(column) + " " + msg) from None
+
 def execute_funx(code):
+    error_listener = FunxErrorListener()
     input_stream = InputStream(code)
     lexer = funxLexer(input_stream)
+    lexer.removeErrorListeners()
+    lexer.addErrorListener(error_listener)
     token_stream = CommonTokenStream(lexer)
     parser = funxParser(token_stream)
-    tree = parser.block()
+    parser.removeErrorListeners()
+    parser.addErrorListener(error_listener)
+    tree = parser.root()
     visitor = TreeVisitor()
-    print("Out: " + str(visitor.visit(tree)))
-    print(tree.toStringTree(recog=parser))
+    return visitor.visit(tree)
 
 
 def main():
@@ -141,7 +216,7 @@ def main():
         contents.append(line)
 
     s = """{}""".format("\n".join(contents))
-    execute_funx(s)
+    print("Out: " + str(execute_funx(s)))
 
 if __name__ == '__main__':
     main()

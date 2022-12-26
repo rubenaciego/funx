@@ -1,5 +1,7 @@
 grammar funx;
 
+root: b=block EOF ;
+
 block: (NEWLINE | WS)* (ins+=line ((NEWLINE | WS)* NEWLINE (NEWLINE | WS)* ins+=line)* (NEWLINE | WS)*)? ;
 
 line:   expr

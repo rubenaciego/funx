@@ -191,6 +191,6 @@ d'accedir a variables d'altres procediments (només a través dels paràmetres).
 L'intèrpret s'ha d'invocar amb les comandes:
 
 ```bash
-export FLASK_APP=funx.sh
+export FLASK_APP=funx
 flask run
 ```

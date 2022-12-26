@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <title>Funx interpreter</title>
+  </head>
+  <body>
+    <h1>Funx</h1>
+    <form action="/", method="POST">
+      <p>Console: <textarea name="input"></textarea></p>
+      <input type = "submit" value = "Submit" />
+      <p>Out: {{ out }}</p>
+      <p>Error: {{ error }}</p>
+
+      <p>Functions:
+        <ul>
+        {% for key, value in funcs.items() %}
+        <il>{{ key }}</il>
+        {% endfor %}
+        </ul>
+      </p>
+
+      <p>Variables:
+        <ul>
+        {% for key, value in vars.items() %}
+        <il>{{ key }}<br></il>
+        {% endfor %}
+        </ul>
+      </p>
+
+      <p>History:
+        <ul>
+        {% for h in hist %}
+        <il>In {{h[2]}}:<br>{{ h[0] }}<br>Out {{h[2]}}: {{ h[1]}}<br></il>
+        {% endfor %}
+        </ul>
+      </p>
+
+    </form>
+  </body>
+</html> 

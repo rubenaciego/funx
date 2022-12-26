@@ -154,8 +154,10 @@ Exemples: `if x = y { z <- 1 }` i `if x = y { z <- 1 } else { z <- 2 }`.
 
 Fixeu-vos que els limitadors dels blocs sempre són obligatoris (tant als 
 condicionals com als procediments i als `while`s).
+
 Si la condició avaludada és buida (per exemple una crida a una funció que no retorna res)
 s'interpreta com una condició falsa.
+
 Com s'explica també a l'apartat d'extensions, també es pot utilitzar la
 construcció `else if` per afegir condicions addicionals.
 
@@ -188,8 +190,9 @@ cert.
 No importa l'ordre de declaració de les funcions. Les variables són locals a
 cada invocació de cada procediment. No hi ha variables globals ni manera
 d'accedir a variables d'altres procediments (només a través dels paràmetres).
+
 A més, com s'explica a l'apartat d'extensions també es poden declarar funcions
-aniudaes dins les altres de forma que només són visibles per aquestes.
+aniudaes dins les altres de forma que només siguin visibles per aquestes.
 
 ## Errors i excepcions
 
@@ -225,11 +228,13 @@ flask run
 ```
 
 També es pot interpretar un arxiu:
-```python3 funx_interpreter.py file.funx```
+```
+python3 funx_interpreter.py file.funx
+```
 
 ## Extensions
 
 S'han implementat 3 extensions:
-- Condicions addicionals amb `else if`, per exemple `if a = 0 {10} else if a = 1 {11}`
-- Definició de funcions aniuades que només són visibles dins la funció on es defineixen
-- Operadors lògics &&, || i ! (únics operadors que permeten aplicar-se a una expressió buida, que s'interpreta com falsa)
+- Condicions addicionals amb `else if`, per exemple: `if a = 0 {10} else if a = 1 {11}`
+- Definició de funcions aniuades que només siguin visibles dins la funció on es defineixen
+- Operadors lògics `&&`, `||` i `!` (únics operadors que permeten aplicar-se a una expressió buida, que s'interpreta com falsa)

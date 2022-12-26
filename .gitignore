@@ -1,0 +1,9 @@
+.antlr/
+__pycache__/
+funx.interp
+funx.tokens
+funxLexer.interp
+funxLexer.py
+funxLexer.tokens
+funxParser.py
+funxVisitor.py

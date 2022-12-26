@@ -18,6 +18,22 @@
         height: 50%;
         font-family: "Lucidia Console", monospace;
       }
+
+      #functions {
+        color: red
+      }
+
+      #variables {
+        color: orange
+      }
+
+      #console {
+        color: cyan
+      }
+
+      #results {
+        color: lawngreen
+      }
     </style>
   </head>
   <body>
@@ -26,7 +42,7 @@
       <div class="column">
         <div class="row">
           <div class="column">
-            <h2>Functions:</h2>
+            <h2 id="functions">Functions:</h2>
             <ul>
             {% for key, value in funcs.items() %}
             <li>{{ key }}{% for p in value[1] %} {{ p }}{% endfor %}<br></li>
@@ -35,7 +51,7 @@
           </div>
 
           <div class="column">
-            <h2>Variables:</h2>
+            <h2 id="variables">Variables:</h2>
             <ul>
             {% for key, value in vars.items() %}
             <li>{{ key }} = {{ value }}<br></il>
@@ -44,7 +60,7 @@
           </div>
         </div>
 
-        <h2>Console:</h2>
+        <h2 id="console">Console:</h2>
         <form action="/", method="POST">
           <textarea name="input" id="code"></textarea>
           <br><br>
@@ -55,13 +71,13 @@
       </div>
 
       <div class="column">
-        <h2>Results:</h2>
+        <h2 id="results">Results:</h2>
         <ul>
         {% for h in hist %}
         <li>
           <b>Submission {{ h[2] }}:</b><br>
           In: {{ h[0] }}<br>
-          Out: {{ h[1]}}<br>
+          Out: {{ h[1] }}<br>
         </li>
         {% endfor %}
         </ul>

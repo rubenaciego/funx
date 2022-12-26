@@ -8,10 +8,14 @@ line:   expr
     |   stmt
     ;
 
-expr:   left=expr WS? op=('*'|'/'|'%') WS? right=expr #opExpr
+expr:   <assoc=right> op=('+'|'-') WS? e=expr #unaryOpExpr
+    |   '!' WS? e=expr #not
+    |   left=expr WS? op=('*'|'/'|'%') WS? right=expr #opExpr
     |   left=expr WS? op=('+'|'-') WS? right=expr #opExpr
     |   left=expr WS? op=('<'|'>'|'<='|'>=') WS? right=expr #opExpr
     |   left=expr WS? op=('='|'!=') WS? right=expr #opExpr
+    |   left=expr WS? '&&' WS? right=expr #and
+    |   left=expr WS? '||' WS? right=expr #or
     |   atom=INT #atom
     |   '(' WS? inner=expr WS? ')' #parentExpr
     |   var=VAR #var

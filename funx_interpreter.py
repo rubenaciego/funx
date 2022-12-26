@@ -91,6 +91,42 @@ class TreeVisitor(funxVisitor):
         self.interpreter.popframe()
         return res
 
+    # Visit a parse tree produced by funxParser#unaryOpExpr.
+    def visitUnaryOpExpr(self, ctx:funxParser.OpExprContext):
+        expr = self.visit(ctx.e)
+
+        if expr is None:
+            raise FunxInvalidOperand(ctx.e.getText(), ctx.getText())
+        
+        return expr if ctx.op.text == '+' else -expr;
+
+    # Visit a parse tree produced by funxParser#not.
+    def visitNot(self, ctx:funxParser.NotContext):
+        expr = self.visit(ctx.e)
+
+        if expr is None:
+            raise FunxInvalidOperand(ctx.e.getText(), ctx.getText())
+        
+        return int(not expr)
+
+    # Visit a parse tree produced by funxParser#and.
+    def visitAnd(self, ctx:funxParser.AndContext):
+        left = self.visit(ctx.left)
+        if not left: return 0
+
+        right = self.visit(ctx.right)
+        if not right: return 0
+        return 1
+
+    # Visit a parse tree produced by funxParser#or.
+    def visitOr(self, ctx:funxParser.OrContext):
+        left = self.visit(ctx.left)
+        if left: return 1
+
+        right = self.visit(ctx.right)
+        if right: return 1
+        return 0
+
     # Visit a parse tree produced by funxParser#opExpr.
     def visitOpExpr(self, ctx:funxParser.OpExprContext):
         left = self.visit(ctx.left)
@@ -132,7 +168,7 @@ class TreeVisitor(funxVisitor):
     def visitAtom(self, ctx:funxParser.AtomContext):
         num = int(ctx.atom.text)
         return num
-
+    
     # Visit a parse tree produced by funxParser#parentExpr.
     def visitParentExpr(self, ctx:funxParser.ParentExprContext):
         return self.visit(ctx.inner)

@@ -23,6 +23,10 @@ def mainpage():
             submit_count += 1
         except FunxException as e:
             error = str(e)
+
+            # Clean frames if the error happened inside a function
+            while len(funx_intr.stackframe) > 1:
+                funx_intr.popframe()
     
     return render_template("base.html", out=out, error=error,
         hist=history, vars=funx_intr.currframe(), funcs=funx_intr.funcs)

@@ -179,29 +179,30 @@ class TreeVisitor(funxVisitor):
         val = self.visit(ctx.src)
         self.interpreter.currframe()[dst_name] = val
 
+    # Visit a parse tree produced by funxParser#if.
+    def visitIf(self, ctx:funxParser.IfContext):
+        return self.visit(ctx.ifb)
+    
     # Visit a parse tree produced by funxParser#ifelse.
     def visitIfelse(self, ctx:funxParser.IfelseContext):
-        cond = self.visit(ctx.cond)
-        if cond is None:
-            raise FunxInvalidOperand(ctx.cond.getText(), ctx.getText())
-        
+        cond = self.visit(ctx.cond)        
         if cond: return self.visit(ctx.trueb)
         elif ctx.falseb: return self.visit(ctx.falseb)
+    
+    # Visit a parse tree produced by funxParser#ifelseif.
+    def visitIfelseif(self, ctx:funxParser.IfelseifContext):
+        cond = self.visit(ctx.cond)
+        if cond: return self.visit(ctx.trueb)
+        else: return self.visit(ctx.elseif)
 
     # Visit a parse tree produced by funxParser#while.
     def visitWhile(self, ctx:funxParser.WhileContext):
         cond = self.visit(ctx.cond)
 
-        if cond is None:
-            raise FunxInvalidOperand(ctx.cond.getText(), ctx.getText())
-
         while cond:
             res = self.visit(ctx.b)
             if res: return res
             cond = self.visit(ctx.cond)
-            if cond is None:
-                raise FunxInvalidOperand(ctx.cond.getText(), ctx.getText())
-
 
     # Visit a parse tree produced by funxParser#fundef.
     def visitFundef(self, ctx:funxParser.FundefContext):

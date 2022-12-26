@@ -23,9 +23,13 @@ expr:   <assoc=right> op=('+'|'-') WS? e=expr #unaryOpExpr
     ;
 
 stmt:   dst=VAR WS? '<-' WS? src=expr #assignment
-    |   'if' WS cond=expr (NEWLINE | WS)* '{' trueb=block '}' ((NEWLINE | WS)* 'else' (NEWLINE | WS)* '{' falseb=block '}')? #ifelse
+    |   ifb=ifblock #if
     |   'while' WS cond=expr (NEWLINE | WS)* '{' b=block '}' #while
     |   fun=FUN (WS params+=VAR)* (NEWLINE | WS)* '{' b=block '}' #fundef
+    ;
+
+ifblock: 'if' WS cond=expr (NEWLINE | WS)* '{' trueb=block '}' (NEWLINE | WS)* 'else' (NEWLINE | WS)+ elseif=ifblock #ifelseif
+    |    'if' WS cond=expr (NEWLINE | WS)* '{' trueb=block '}' ((NEWLINE | WS)* 'else' (NEWLINE | WS)* '{' falseb=block '}')? #ifelse
     ;
 
 NEWLINE : [\r\n]+ ;

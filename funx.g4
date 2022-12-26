@@ -25,6 +25,6 @@ stmt:   dst=VAR WS? '<-' WS? src=expr #assignment
 NEWLINE : [\r\n]+ ;
 WS      : [ \t]+ ;
 INT     : [0-9]+ ;
-VAR     : [a-z][a-zA-Z]* ;
-FUN     : [A-Z][a-zA-Z]* ;
+VAR     : [a-z][a-zA-Z0-9_]* ;
+FUN     : [A-Z][a-zA-Z0-9_]* ;
 COMMENT : [#]~[\r\n]* -> channel(HIDDEN);

@@ -154,6 +154,10 @@ Exemples: `if x = y { z <- 1 }` i `if x = y { z <- 1 } else { z <- 2 }`.
 
 Fixeu-vos que els limitadors dels blocs sempre són obligatoris (tant als 
 condicionals com als procediments i als `while`s).
+Si la condició avaludada és buida (per exemple una crida a una funció que no retorna res)
+s'interpreta com una condició falsa.
+Com s'explica també a l'apartat d'extensions, també es pot utilitzar la
+construcció `else if` per afegir condicions addicionals.
 
 ## Iteració amb `while`
 
@@ -184,9 +188,34 @@ cert.
 No importa l'ordre de declaració de les funcions. Les variables són locals a
 cada invocació de cada procediment. No hi ha variables globals ni manera
 d'accedir a variables d'altres procediments (només a través dels paràmetres).
+A més, com s'explica a l'apartat d'extensions també es poden declarar funcions
+aniudaes dins les altres de forma que només són visibles per aquestes.
+
+## Errors i excepcions
+
+Els errors que poden saltar durant l'execució són:
+- `UndefinedFunction` quan s'intenta cridar una funció no definida
+- `RedefinedFunction` quan s'intenta definir una funció ja definida
+- `InvalidOperand` quan algun operand és buit en alguna expressió (es llença en crides a funcions, operadors no lògics i assignacions)
+- `InvalidParams` quan el nombre de paràmetres en la crida a una funció no coincideix amb la definició
+- `RepeatedParams` quan es repeteixen noms de paràmetres en la definició d'una funció
+- `ZeroDivision` quan s'intenta dividir entre 0
+- `SyntaxError` quan hi ha algun error de sintaxi
+
+## Comentaris sobre la sintaxi
+
+Una expressió s'ha de trobar sobre una mateixa línia i dues expressions
+dins del mateix bloc han d'anar separades per (com a mínim) un salt de línia.
+
+Els espais en blanc s'ignoren llevat de les següents situacions:
+- Paràmetres en les declaracions i crides a funcions `F x y`
+- Després de les sentències `if`, `else if` i `while`
+
+Les condicions que segueixen a `if` i `while` s'han de trobar també sobre la mateixa línia.
+Observem que en un `else if` les dues paraules clau poden anar separades tant per salts de línia
+com per espais en blanc.
 
 ## Invocació de l'intèrpret
-
 
 L'intèrpret s'ha d'invocar amb les comandes:
 
@@ -194,3 +223,13 @@ L'intèrpret s'ha d'invocar amb les comandes:
 export FLASK_APP=funx
 flask run
 ```
+
+També es pot interpretar un arxiu:
+```python3 funx_interpreter.py file.funx```
+
+## Extensions
+
+S'han implementat 3 extensions:
+- Condicions addicionals amb `else if`, per exemple `if a = 0 {10} else if a = 1 {11}`
+- Definició de funcions aniuades que només són visibles dins la funció on es defineixen
+- Operadors lògics &&, || i ! (únics operadors que permeten aplicar-se a una expressió buida, que s'interpreta com falsa)

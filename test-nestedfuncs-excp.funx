@@ -1,0 +1,12 @@
+# Test per les funcions aniuades
+
+F1 a b {
+    Aux x {
+        x * 2
+    }
+
+    a + Aux b
+}
+
+Aux 1
+# undefined function 'Aux'

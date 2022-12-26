@@ -2,11 +2,7 @@ grammar funx;
 
 root: b=block EOF ;
 
-block: (NEWLINE | WS)* (ins+=line ((NEWLINE | WS)* NEWLINE (NEWLINE | WS)* ins+=line)* (NEWLINE | WS)*)? ;
-
-line:   expr
-    |   stmt
-    ;
+block: (NEWLINE | WS)* (ins+=expr ((NEWLINE | WS)* NEWLINE (NEWLINE | WS)* ins+=expr)* (NEWLINE | WS)*)? ;
 
 expr:   <assoc=right> op=('+'|'-') WS? e=expr #unaryOpExpr
     |   '!' WS? e=expr #not
@@ -20,9 +16,7 @@ expr:   <assoc=right> op=('+'|'-') WS? e=expr #unaryOpExpr
     |   '(' WS? inner=expr WS? ')' #parentExpr
     |   var=VAR #var
     |   fun=FUN (WS params+=expr)* #funcall
-    ;
-
-stmt:   dst=VAR WS? '<-' WS? src=expr #assignment
+    |   dst=VAR WS? '<-' WS? src=expr #assignment
     |   ifb=ifblock #if
     |   'while' WS cond=expr (NEWLINE | WS)* '{' b=block '}' #while
     |   fun=FUN (WS params+=VAR)* (NEWLINE | WS)* '{' b=block '}' #fundef

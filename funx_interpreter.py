@@ -3,37 +3,45 @@ from antlr4.error.ErrorListener import ErrorListener
 from funx_grammar.funxLexer import funxLexer
 from funx_grammar.funxParser import funxParser
 from funx_grammar.funxVisitor import funxVisitor
+import sys
+
 
 class FunxException(Exception):
     def __init__(self, message):
         self.message = message
-    
+
     def __str__(self):
         return self.message
+
 
 class FunxUndefinedFunction(FunxException):
     def __init__(self, fname, line):
         super().__init__('funx undefined function \'' + fname + '\' in \'' + line + '\'')
         self.function_name = fname
 
+
 class FunxRedefinedFunction(FunxException):
     def __init__(self, fname, line):
         super().__init__('funx redefined function \'' + fname + '\' in \'' + line + '\'')
         self.function_name = fname
 
+
 class FunxInvalidOperand(FunxException):
     def __init__(self, expr, line):
-        super().__init__('funx invalid operand (not an expression) \'' + expr + '\' in \'' + line + '\'')
+        super().__init__('funx invalid operand (not an expression) \'' +
+                         expr + '\' in \'' + line + '\'')
         self.expr = expr
+
 
 class FunxInvalidParams(FunxException):
     def __init__(self, fname, fparams, params, line):
         super().__init__('funx invalid parameter amount in \'' + line + '\', calling function \''
-            + fname + ' ' + str(fparams) + '\' with ' + str(params))
+                         + fname + ' ' + str(fparams) + '\' with ' + str(params))
 
         self.function_name = fname
         self.function_params = fparams
         self.given_params = params
+
 
 class FunxRepeatedParams(FunxException):
     def __init__(self, fname, fparams, line):
@@ -41,10 +49,12 @@ class FunxRepeatedParams(FunxException):
         self.function_name = fname
         self.function_params = fparams
 
+
 class FunxZeroDivision(FunxException):
     def __init__(self, expr):
         super().__init__('funx division by zero in \'' + expr + '\'')
         self.line = expr
+
 
 class FunxSyntaxError(FunxException):
     def __init__(self, line):
@@ -61,13 +71,14 @@ class TreeVisitor(funxVisitor):
         return self.visit(ctx.b)
 
     # Visit a parse tree produced by funxParser#block.
-    def visitBlock(self, ctx:funxParser.BlockContext):
+    def visitBlock(self, ctx: funxParser.BlockContext):
         for ins in ctx.ins:
             res = self.visit(ins)
-            if res != None: return res
+            if res is not None:
+                return res
 
     # Visit a parse tree produced by funxParser#funcall.
-    def visitFuncall(self, ctx:funxParser.FuncallContext):
+    def visitFuncall(self, ctx: funxParser.FuncallContext):
         function_name = ctx.fun.text
         params = []
 
@@ -75,12 +86,18 @@ class TreeVisitor(funxVisitor):
             raise FunxUndefinedFunction(function_name, ctx.getText())
 
         for p in ctx.params:
+            val = self.visit(p)
+
+            if val is None:
+                raise FunxInvalidOperand(p.text, ctx.getText())
+
             params.append(self.visit(p))
 
         func = self.interpreter.funcs[function_name]
 
         if len(params) != len(func[1]):
-            raise FunxInvalidParams(function_name, func[1], params, ctx.getText())
+            raise FunxInvalidParams(
+                function_name, func[1], params, ctx.getText())
 
         self.interpreter.pushframe()
 
@@ -92,43 +109,43 @@ class TreeVisitor(funxVisitor):
         return res
 
     # Visit a parse tree produced by funxParser#unaryOpExpr.
-    def visitUnaryOpExpr(self, ctx:funxParser.OpExprContext):
+    def visitUnaryOpExpr(self, ctx: funxParser.OpExprContext):
         expr = self.visit(ctx.e)
 
         if expr is None:
             raise FunxInvalidOperand(ctx.e.getText(), ctx.getText())
-        
-        return expr if ctx.op.text == '+' else -expr;
+
+        return expr if ctx.op.text == '+' else -expr
 
     # Visit a parse tree produced by funxParser#not.
-    def visitNot(self, ctx:funxParser.NotContext):
+    def visitNot(self, ctx: funxParser.NotContext):
         expr = self.visit(ctx.e)
-
-        if expr is None:
-            raise FunxInvalidOperand(ctx.e.getText(), ctx.getText())
-        
         return int(not expr)
 
     # Visit a parse tree produced by funxParser#and.
-    def visitAnd(self, ctx:funxParser.AndContext):
+    def visitAnd(self, ctx: funxParser.AndContext):
         left = self.visit(ctx.left)
-        if not left: return 0
+        if not left:
+            return 0
 
         right = self.visit(ctx.right)
-        if not right: return 0
+        if not right:
+            return 0
         return 1
 
     # Visit a parse tree produced by funxParser#or.
-    def visitOr(self, ctx:funxParser.OrContext):
+    def visitOr(self, ctx: funxParser.OrContext):
         left = self.visit(ctx.left)
-        if left: return 1
+        if left:
+            return 1
 
         right = self.visit(ctx.right)
-        if right: return 1
+        if right:
+            return 1
         return 0
 
     # Visit a parse tree produced by funxParser#opExpr.
-    def visitOpExpr(self, ctx:funxParser.OpExprContext):
+    def visitOpExpr(self, ctx: funxParser.OpExprContext):
         left = self.visit(ctx.left)
         right = self.visit(ctx.right)
         res = 0
@@ -154,58 +171,67 @@ class TreeVisitor(funxVisitor):
                 case _: raise FunxSyntaxError('unknown binary operator \'' + ctx.op.text + '\'')
         except ZeroDivisionError:
             raise FunxZeroDivision(ctx.getText()) from None
-        
+
         return res
 
     # Visit a parse tree produced by funxParser#var.
-    def visitVar(self, ctx:funxParser.VarContext):
+    def visitVar(self, ctx: funxParser.VarContext):
         var_name = ctx.var.text
         if var_name not in self.interpreter.currframe():
             self.interpreter.currframe()[var_name] = 0
         return self.interpreter.currframe()[var_name]
 
     # Visit a parse tree produced by funxParser#atom.
-    def visitAtom(self, ctx:funxParser.AtomContext):
+    def visitAtom(self, ctx: funxParser.AtomContext):
         num = int(ctx.atom.text)
         return num
-    
+
     # Visit a parse tree produced by funxParser#parentExpr.
-    def visitParentExpr(self, ctx:funxParser.ParentExprContext):
+    def visitParentExpr(self, ctx: funxParser.ParentExprContext):
         return self.visit(ctx.inner)
 
     # Visit a parse tree produced by funxParser#assignment.
-    def visitAssignment(self, ctx:funxParser.AssignmentContext):
+    def visitAssignment(self, ctx: funxParser.AssignmentContext):
         dst_name = ctx.dst.text
         val = self.visit(ctx.src)
+
+        if val is None:
+            raise FunxInvalidOperand(ctx.src.text, ctx.getText())
+
         self.interpreter.currframe()[dst_name] = val
 
     # Visit a parse tree produced by funxParser#if.
-    def visitIf(self, ctx:funxParser.IfContext):
+    def visitIf(self, ctx: funxParser.IfContext):
         return self.visit(ctx.ifb)
-    
+
     # Visit a parse tree produced by funxParser#ifelse.
-    def visitIfelse(self, ctx:funxParser.IfelseContext):
-        cond = self.visit(ctx.cond)        
-        if cond: return self.visit(ctx.trueb)
-        elif ctx.falseb: return self.visit(ctx.falseb)
-    
-    # Visit a parse tree produced by funxParser#ifelseif.
-    def visitIfelseif(self, ctx:funxParser.IfelseifContext):
+    def visitIfelse(self, ctx: funxParser.IfelseContext):
         cond = self.visit(ctx.cond)
-        if cond: return self.visit(ctx.trueb)
-        else: return self.visit(ctx.elseif)
+        if cond:
+            return self.visit(ctx.trueb)
+        elif ctx.falseb:
+            return self.visit(ctx.falseb)
+
+    # Visit a parse tree produced by funxParser#ifelseif.
+    def visitIfelseif(self, ctx: funxParser.IfelseifContext):
+        cond = self.visit(ctx.cond)
+        if cond:
+            return self.visit(ctx.trueb)
+        else:
+            return self.visit(ctx.elseif)
 
     # Visit a parse tree produced by funxParser#while.
-    def visitWhile(self, ctx:funxParser.WhileContext):
+    def visitWhile(self, ctx: funxParser.WhileContext):
         cond = self.visit(ctx.cond)
 
         while cond:
             res = self.visit(ctx.b)
-            if res: return res
+            if res is not None:
+                return res
             cond = self.visit(ctx.cond)
 
     # Visit a parse tree produced by funxParser#fundef.
-    def visitFundef(self, ctx:funxParser.FundefContext):
+    def visitFundef(self, ctx: funxParser.FundefContext):
         function_name = ctx.fun.text
 
         if function_name in self.interpreter.funcs:
@@ -217,13 +243,14 @@ class TreeVisitor(funxVisitor):
 
         if len(param_names) != len(set(param_names)):
             raise FunxRepeatedParams(function_name, param_names, ctx.getText())
-        
+
         self.interpreter.add_function(function_name, (ctx.b, param_names))
 
 
 class FunxErrorListener(ErrorListener):
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
-        raise FunxSyntaxError('line ' + str(line) + ':' + str(column) + ' ' + msg) from None
+        raise FunxSyntaxError('line ' + str(line) + ':' +
+                              str(column) + ' ' + msg) from None
 
 
 class FunxInterpreter:
@@ -239,13 +266,13 @@ class FunxInterpreter:
     def pushframe(self):
         self.stackframe.append({})
         self.functionframe.append([])
-    
+
     def popframe(self):
         self.stackframe.pop()
 
         for f in self.functionframe[-1]:
             self.funcs.pop(f)
-        
+
         self.functionframe.pop()
 
     def currframe(self):
@@ -266,3 +293,15 @@ class FunxInterpreter:
         parser.addErrorListener(self.error_listener)
         tree = parser.root()
         return self.visitor.visit(tree)
+
+
+def main():
+    with open(sys.argv[1], 'r') as f:
+        code = f.read()
+
+    funx = FunxInterpreter()
+    print('Out: ' + str(funx.execute(code)))
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,10 @@
+# Test dels operadors lògics &&, || i !
+
+a <- 1
+b <- 2
+
+if (a = 3 || b = 0) || !(a = 1 && b = 3) {
+    1
+}
+
+# Out: 1

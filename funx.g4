@@ -5,7 +5,7 @@ root: b=block EOF ;
 block: (NEWLINE | WS)* (ins+=expr ((NEWLINE | WS)* NEWLINE (NEWLINE | WS)* ins+=expr)* (NEWLINE | WS)*)? ;
 
 expr:   <assoc=right> op=('+'|'-') WS? e=expr #unaryOpExpr
-    |   <assoc=right>'!' WS? e=expr #not
+    |   <assoc=right> '!' WS? e=expr #not
     |   left=expr WS? op=('*'|'/'|'%') WS? right=expr #opExpr
     |   left=expr WS? op=('+'|'-') WS? right=expr #opExpr
     |   left=expr WS? op=('<'|'>'|'<='|'>=') WS? right=expr #opExpr
